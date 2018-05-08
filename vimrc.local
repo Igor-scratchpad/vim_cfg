@@ -1,0 +1,21 @@
+set nocompatible
+set showcmd
+set showmatch
+set incsearch
+set mouse=a
+set number
+set textwidth=74
+set history=9999
+set ruler
+set colorcolumn=75
+set ai
+
+filetype plugin indent on
+
+let c_space_errors = 1
+let cpp_space_errors = 1
+let python_space_errors = 1
+let java_space_errors = 1
+
+autocmd BufWinLeave * call clearmatches()
+autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
