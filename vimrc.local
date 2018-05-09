@@ -1,14 +1,65 @@
+syntax on
 set nocompatible
 set showcmd
 set showmatch
 set incsearch
 set mouse=a
+set ttymouse=sgr "overcomes column limit on wide monitors"
 set number
 set textwidth=74
 set history=9999
 set ruler
 set colorcolumn=75
 set ai
+set autoread
+set autowrite
+set hidden
+set backspace=indent,eol,start	" more powerful backspacing
+set cinoptions=(0,u0,U0)
+set background=dark
+set hlsearch
+set clipboard=unnamed "uses the system clipboard"
+
+"set runtimepath=~/.vim,/var/lib/vim/addons,/usr/share/vim/vimfiles,/usr/share/vim/vim80,/usr/share/vim/vimfiles/after,/var/lib/vim/addons/after,~/.vim/after,/etc/vim/plugins"
+
+" Suffixes that get lower priority when doing tab completion for filenames.
+" These are files we are not likely to want to edit or read.
+set suffixes=.bak,~,.swp,.o,.info,.aux,.log,.dvi,.bbl,.blg,.brf,.cb,.ind,.idx,.ilg,.inx,.out,.toc
+
+" We know xterm-debian is a color terminal
+if &term =~ "xterm-debian" || &term =~ "xterm-xfree86"
+  set t_Co=16
+  set t_Sf=[3%dm
+  set t_Sb=[4%dm
+endif
+
+" Some Debian-specific things
+if has("autocmd")
+  if has('gui')
+    " Must define this within the :if so it does not cause problems with
+    " vim-tiny (which does not have +eval)
+    function! <SID>MapExists(name, modes)
+      for mode in split(a:modes, '\zs')
+        if !empty(maparg(a:name, mode))
+          return 1
+        endif
+      endfor
+      return 0
+    endfunction
+
+    " Make shift-insert work like in Xterm
+    autocmd GUIEnter * if !<SID>MapExists("<S-Insert>", "nvso") | execute "map <S-Insert> <MiddleMouse>" | endif
+    autocmd GUIEnter * if !<SID>MapExists("<S-Insert>", "ic") | execute "map! <S-Insert> <MiddleMouse>" | endif
+  endif
+endif
+
+" Set paper size from /etc/papersize if available (Debian-specific)
+if filereadable("/etc/papersize")
+  let s:papersize = matchstr(readfile('/etc/papersize', '', 1), '\p*')
+  if strlen(s:papersize)
+    exe "set printoptions+=paper:" . s:papersize
+  endif
+endif
 
 filetype plugin indent on
 
@@ -18,4 +69,88 @@ let python_space_errors = 1
 let java_space_errors = 1
 
 autocmd BufWinLeave * call clearmatches()
+
+"Goto last position when reopening a file"
 autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+
+
+"Use linux style when editing kernel sources"
+let g:linuxsty_patterns = [ "~/dev/kernel/linux/" ]
+
+" Auto reload files that have changed outside of vim (Version >= 8)
+let timer = timer_start(2000, 'ReloadFiles',{'repeat':-1})
+func ReloadFiles(timer)
+	:checktime
+endfunc
+
+fu! SaveSess()
+    execute 'mksession! ' . getcwd() . '/.session.vim'
+endfunction
+
+fu! RestoreSess()
+if filereadable(getcwd() . '/.session.vim')
+    execute 'so ' . getcwd() . '/.session.vim'
+    if bufexists(1)
+        for l in range(1, bufnr('$'))
+            if bufwinnr(l) == -1
+                exec 'sbuffer ' . l
+            endif
+        endfor
+    endif
+endif
+endfunction
+
+"autocmd VimLeave * call SaveSess()"
+"autocmd VimEnter * nested call RestoreSess()"
+
+
+"Rename tabs to show tab# and # of viewports
+"use gt and gT to move right/left
+"use <n>gt o skip to tab n
+if exists("+showtabline")
+    function! MyTabLine()
+        let s = ''
+        let wn = ''
+        let t = tabpagenr()
+        let i = 1
+        while i <= tabpagenr('$')
+            let buflist = tabpagebuflist(i)
+            let winnr = tabpagewinnr(i)
+            let s .= '%' . i . 'T'
+            let s .= (i == t ? '%1*' : '%2*')
+            let s .= ' '
+            let wn = tabpagewinnr(i,'$')
+
+            let s .= (i== t ? '%#TabNumSel#' : '%#TabNum#')
+            let s .= i
+            if tabpagewinnr(i,'$') > 1
+                let s .= '.'
+                let s .= (i== t ? '%#TabWinNumSel#' : '%#TabWinNum#')
+                let s .= (tabpagewinnr(i,'$') > 1 ? wn : '')
+            end
+
+            let s .= ' %*'
+            let s .= (i == t ? '%#TabLineSel#' : '%#TabLine#')
+            let bufnr = buflist[winnr - 1]
+            let file = bufname(bufnr)
+            let buftype = getbufvar(bufnr, 'buftype')
+            if buftype == 'nofile'
+                if file =~ '\/.'
+                    let file = substitute(file, '.*\/\ze.', '', '')
+                endif
+            else
+                let file = fnamemodify(file, ':p:t')
+            endif
+            if file == ''
+                let file = '[No Name]'
+            endif
+            let s .= file
+            let s .= (i == t ? '%m' : '')
+            let i = i + 1
+        endwhile
+        let s .= '%T%#TabLineFill#%='
+        return s
+    endfunction
+    set stal=2
+    set tabline=%!MyTabLine()
+endif
