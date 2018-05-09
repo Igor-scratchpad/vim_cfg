@@ -9,6 +9,7 @@ set history=9999
 set ruler
 set colorcolumn=75
 set ai
+set autoread
 
 filetype plugin indent on
 
@@ -19,3 +20,9 @@ let java_space_errors = 1
 
 autocmd BufWinLeave * call clearmatches()
 autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+
+
+let timer = timer_start(2000, 'ReloadFiles',{'repeat':-1})
+func ReloadFiles(timer)
+	:checktime
+endfunc
