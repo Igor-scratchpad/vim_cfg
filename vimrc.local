@@ -16,6 +16,7 @@ set hidden
 set backspace=indent,eol,start	" more powerful backspacing
 set cinoptions=(0,u0,U0)
 set background=dark
+set hlsearch
 
 set runtimepath=~/.vim,/var/lib/vim/addons,/usr/share/vim/vimfiles,/usr/share/vim/vim80,/usr/share/vim/vimfiles/after,/var/lib/vim/addons/after,~/.vim/after,/etc/vim/plugins
 
