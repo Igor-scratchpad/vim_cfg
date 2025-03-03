@@ -61,6 +61,8 @@ if filereadable("/etc/papersize")
   endif
 endif
 
+set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+
 filetype plugin indent on
 
 let c_space_errors = 1
